@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "bank-finbourne": {
+      "command": "uv",
+      "args": ["run", "python", "-m", "bank_finbourne_tester.mcp"],
+      "cwd": "C:\\dev\\clio-git\\bank-finbourne-public-api-tester",
+      "env": {
+        "LUSID_URL": "${LUSID_URL}",
+        "LUSID_TOKEN_URL": "${LUSID_TOKEN_URL}",
+        "LUSID_CLIENT_ID": "${LUSID_CLIENT_ID}",
+        "LUSID_CLIENT_SECRET": "${LUSID_CLIENT_SECRET}"
+      }
+    }
+  }
+}
