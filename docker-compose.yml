@@ -1,0 +1,18 @@
+services:
+  lusid-mock:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lusid-mock
+    ports:
+      - "9000:9000"
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "9000"
+      LOG_LEVEL: "info"
+      RELOAD: "false"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9000/lusid-mock/control/status')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

@@ -1,47 +1,68 @@
-# bank-finbourne-public-api-tester — Claude Code Project Context
+# LUSID Mock Server — Claude Code Project Context
 
 ## Purpose
 
-This project tests and demonstrates interaction with the FINBOURNE public API (LUSID), exposing a unified access layer through three transports — MCP, REST, and GraphQL — while maintaining a shared data model and service layer. The domain covers FINBOURNE's investment management platform including portfolios, transactions, holdings, instruments, and corporate actions.
+This project is an in-memory mock of the FINBOURNE LUSID API (Drive, Workflow, Notification). It lets applications that depend on LUSID — such as the Workflow Integration Gateway (WIG) — run and be tested locally without real FINBOURNE credentials or network access.
+
+The mock accepts the same HTTP paths as LUSID, stores state in memory, auto-advances task state machines via async background tasks, and fires webhooks to a configured callback URL.
 
 ## Key Documentation
 
-- **docs/ARCHITECTURE.md** — current-state design, layers, domain model, service API, and deployment patterns
-- **docs/AGENTS.md** — MCP tool reference with parameter formats and best practices
-- Planning documents (reference-only, do not modify): any PLAN*.md files in docs/
-
-New developers should start with ARCHITECTURE.md for codebase orientation, then review AGENTS.md before writing queries or extending MCP tools.
+- **docs/ARCHITECTURE.md** — layers, state machine design, scenario config, design decisions
+- **docs/AGENTS.md** — full API reference for all endpoints (Drive, Workflow, Control)
 
 ## Quick Start
 
-The project uses uv for dependency management:
-
 ```bash
 uv sync
-cp .env.example .env   # fill in FINBOURNE credentials
-pytest tests/ -v
+uv run python -m lusid_mock        # runs on port 9000
+# or
+docker compose up -d
 ```
 
-Three transports run independently: MCP via stdio, REST on port 8000, and GraphQL on port 8001.
+Tests (no external dependencies):
+
+```bash
+uv run pytest tests/ -v
+```
 
 ## Critical Constraints
 
-- All FINBOURNE API calls must route through the service layer (`bank_finbourne_tester.services.*`)
-- MCP server is read-only — no mutation tools
-- No query logic in transport layers (MCP tools, REST routers, GraphQL resolvers call services only)
-- Maintain transport parity — all three interfaces must return identical results for identical inputs
-- No ad-hoc entity additions without updating the model registry
+- All state is in-memory — no database, no external dependencies
+- The mock exposes the same paths as real LUSID so consuming apps need zero code changes to switch targets
+- Control API (`/lusid-mock/control/*`) is test-only — not part of the real LUSID API surface
+- No authentication — auth is out of scope for this mock
+- `POST /lusid-mock/control/reset` must be called between test cases for isolation
 
 ## Architecture Pattern
 
 ```
-FINBOURNE Public API
+HTTP client (WIG / tests)
         ↓
-  Pydantic Models (models/)
+   FastAPI Routers  (api/)
         ↓
-   Service Layer (services/)
-   ↙        ↓        ↘
-MCP        REST      GraphQL
+   Service Layer  (services/)
+        ↓
+   In-Memory Stores  (store/)
+        ↓
+   Pydantic Models  (models/)
+```
+
+## Project Structure
+
+```
+src/lusid_mock/
+├── models/      DriveFile, Task, ScenarioConfig, EventEntry
+├── store/       DriveStore, TaskStore (in-memory, with event log)
+├── services/    drive_service, workflow_service, webhook_service
+├── api/         FastAPI routers: /drive, /workflow, /lusid-mock/control
+└── app.py       App factory (create_app)
+tests/
+├── conftest.py  Shared fixtures — TestClient + auto-reset
+├── test_drive.py
+├── test_workflow.py
+├── test_control.py
+└── test_e2e.py
 ```
 
 The codebase is located at `C:\dev\clio-git\bank-finbourne-public-api-tester\`.

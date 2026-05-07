@@ -1,0 +1,11 @@
+{
+  "version": "0.2",
+  "words": [
+    "LUSID", "lusid", "FINBOURNE", "finbourne",
+    "Pydantic", "pydantic",
+    "asyncio", "fastapi", "uvicorn", "httpx",
+    "pytest", "multipart", "fnmatch",
+    "WIG", "SFTP", "IMAP", "SWIFT",
+    "updateable", "updatable"
+  ]
+}
